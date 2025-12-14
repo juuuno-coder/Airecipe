@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Save, BarChart3, Layout, Trophy } from "lucide-react";
+import { Loader2, Save, BarChart3, Layout, Trophy, Crown } from "lucide-react";
 import { WeeklyRanking } from "@/components/weekly-ranking";
 
 export default function AdminDashboard() {
@@ -183,10 +183,24 @@ export default function AdminDashboard() {
 
             <TabsContent value="ranking" className="mt-6">
                 <Card className="bg-slate-900 border-white/10">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
                             <Trophy className="h-5 w-5 text-yellow-500" /> 실시간 랭킹 모니터링
                         </CardTitle>
+                        <Button 
+                            onClick={async () => {
+                                if(!confirm("현재 1위 레시피를 명예의 전당에 등재하시겠습니까?")) return;
+                                const { inductWeeklyWinner } = await import("../actions");
+                                const res = await inductWeeklyWinner();
+                                if(res.error) toast.error(res.error);
+                                else toast.success(res.message);
+                            }}
+                            variant="outline"
+                            className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10"
+                        >
+                            <Crown className="mr-2 h-4 w-4" /> 
+                            현재 1위 명예의 전당 등재
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         <WeeklyRanking />
