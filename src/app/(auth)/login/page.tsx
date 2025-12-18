@@ -23,12 +23,13 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* OAuth Buttons */}
-          <div className="grid grid-cols-2 gap-4">
-            <form action={signInWithKakao} className="w-full">
+          <div className="grid grid-cols-1 gap-4">
+            {/* Kakao Hidden */}
+            {/* <form action={signInWithKakao} className="w-full">
                 <Button variant="outline" className="w-full border-[#FEE500] bg-[#FEE500] text-black hover:bg-[#FEE500]/90 hover:text-black">
                     <MessageCircle className="mr-2 h-4 w-4 fill-black" /> Kakao
                 </Button>
-            </form>
+            </form> */}
             <form action={signInWithGoogle} className="w-full">
                 <Button variant="outline" className="w-full border-border bg-secondary/50 hover:bg-secondary">
                     <PlayCircle className="mr-2 h-4 w-4" /> Google
