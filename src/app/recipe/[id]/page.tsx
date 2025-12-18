@@ -236,11 +236,11 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                             <ImageComparison 
                                 beforeImage={recipe.before_image_url}
                                 afterImage={recipe.after_image_url}
-                                className="w-full aspect-square shadow-2xl border border-indigo-500/20 rounded-2xl overflow-hidden"
+                                className="w-full aspect-[1/1.6] shadow-2xl border border-indigo-500/20 rounded-2xl overflow-hidden"
                             />
                         </div>
                     ) : recipe.image_url && (
-                        <div className="mt-8 rounded-2xl overflow-hidden border border-white/5 shadow-2xl aspect-square relative group">
+                        <div className="mt-8 rounded-2xl overflow-hidden border border-white/5 shadow-2xl aspect-[1/1.6] relative group">
                              {/* eslint-disable-next-line @next/next/no-img-element */}
                              <img src={recipe.image_url} alt="Result" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                         </div>
