@@ -21,7 +21,7 @@ export default async function Home({
   searchParams: Promise<{ category?: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+
 
   // Parallel Fetching for Performance
   const [params] = await Promise.all([
