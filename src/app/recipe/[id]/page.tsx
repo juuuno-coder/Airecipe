@@ -196,8 +196,8 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
       <div className="container max-w-[1400px] px-4 py-16 mx-auto relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
-            {/* Main Content Area (Larger share: 8/12) */}
-            <div className="lg:col-span-8 space-y-16">
+            {/* Main Content Area (Larger share: 9/12) */}
+            <div className="lg:col-span-9 space-y-16">
                 
                 {/* 2. Intro & Summary */}
                 <section className="space-y-6">
@@ -327,8 +327,8 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                 </section>
             </div>
 
-            {/* Sticky Sidebar (Smaller share: 4/12) */}
-            <div className="lg:col-span-4 space-y-8">
+            {/* Sticky Sidebar (Smaller share: 3/12) */}
+            <div className="lg:col-span-3 space-y-8">
                 <div className="sticky top-24 space-y-6">
                     
                     {/* Primary Action Card */}
