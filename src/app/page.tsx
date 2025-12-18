@@ -1,18 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { BentoGrid, BentoGridItem } from "@/components/bento-grid";
 import { Badge } from "@/components/ui/badge";
-import { Zap, ArrowRight, Cpu, Command, Terminal, Layers, Sparkles, TrendingUp, Filter, Code2, PenTool, Image as ImageIcon, Briefcase, Clock, Video } from "lucide-react";
+import { Zap, ArrowRight, Cpu, Command, Terminal, Layers, Sparkles, TrendingUp, Filter, Code2, PenTool, Image as ImageIcon, Briefcase, Clock, Video, Trophy } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/utils/supabase/server";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RecipeCard } from "@/components/recipe-card";
 import { MainBanner } from "@/components/main-banner";
 import { WeeklyRanking } from "@/components/weekly-ranking";
-import { Trophy } from "lucide-react";
 
-// Cache data for 60 seconds (ISR) to improve performance
+// Async Components (Streaming)
+import { Suspense } from "react";
+import { FeaturedRecipes } from "@/components/home/featured-recipes";
+import { WeeklyBestRecipes } from "@/components/home/weekly-best";
+import { AllRecipesGrid } from "@/components/home/recipe-grid";
+
+// Cache data (ISR)
 export const revalidate = 60;
 
 export default async function Home({
@@ -20,56 +19,9 @@ export default async function Home({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  const supabase = await createClient();
-
-
-  // Parallel Fetching for Performance
-  const [params] = await Promise.all([
-    searchParams,
-  ]);
-  
+  const params = await searchParams;
   const currentCategory = params.category || "전체";
-  
-  // Optimize: Select only necessary columns
-  let query = supabase
-    .from("recipes")
-    .select(`
-        id, 
-        title, 
-        description, 
-        image_url, 
-        cooking_time_minutes, 
-        created_at, 
-        view_count, 
-        user_id, 
-        category,
-        difficulty,
-        profiles (username, avatar_url),
-        likes (count)
-    `)
-    .order("created_at", { ascending: false })
-    .limit(50); // Limit to 50 items for performance
 
-  if (currentCategory !== "전체") {
-      query = query.eq("category", currentCategory);
-  }
-
-  // Fetch recipes (No fallback needed as DB is stable)
-  const { data: recipesData, error } = await query;
-  
-  const recipes = recipesData || [];
-
-  if (error) {
-    console.error("Home fetch error:", error);
-  }
-
-  // Separate data for sections
-  const featuredRecipes = recipes ? recipes.slice(0, 3) : [];
-  // For weekly best, ideally sort by view count, but for now just use latest
-  const weeklyRecipes = recipes ? [...recipes].sort((a,b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 5) : [];
-  const allRecipes = recipes || [];
-
-  const models = ["All Models", "GPT-4", "Claude 3", "Midjourney", "Gemini", "Llama 3"];
   const categories = [
     { name: "전체", icon: Layers },
     { name: "개발", icon: Code2 },
@@ -83,10 +35,9 @@ export default async function Home({
   return (
     <div className="flex flex-col min-h-screen bg-[#020617] text-slate-200">
       
-      {/* 1. Hero Section (Black & White Chef Concept) */}
+      {/* 1. Hero Section (Static - Loads Instantly) */}
       <section className="relative w-full min-h-[60vh] flex flex-col items-center justify-center overflow-hidden border-b border-white/5 bg-[#0a0a0a] pb-32">
         <div className="absolute inset-0 z-0">
-             {/* Dramatic Spotlight Effect */}
              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
              <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-[#020617]/50 to-[#020617] z-10" />
@@ -121,8 +72,10 @@ export default async function Home({
         </div>
       </section>
 
-      {/* 2. Main Banner (Managed by Admin) */}
-      <MainBanner />
+      {/* 2. Main Banner (Admin Managed) */}
+      <Suspense fallback={<div className="container h-64 bg-white/5 animate-pulse rounded-xl my-8" />}>
+         <MainBanner />
+      </Suspense>
 
       {/* 3. Weekly Ranking Section */}
       <section className="container px-4 py-8">
@@ -132,111 +85,25 @@ export default async function Home({
             </div>
             <h2 className="text-xl font-bold tracking-tight text-white">🏆 실시간 주간 랭킹</h2>
          </div>
-         <WeeklyRanking />
+         {/* Suspense for Ranking */}
+         <Suspense fallback={<div className="h-40 bg-white/5 rounded-xl animate-pulse" />}>
+            <WeeklyRanking />
+         </Suspense>
       </section>
 
-      {/* 1. Featured Section - Today's Pick (Bento Style) */}
-      <section className="container px-4 py-12">
-        <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-          <h2 className="text-xl font-bold tracking-tight text-white">오늘의 추천 레시피</h2>
-        </div>
-        
-        <BentoGrid>
-          {featuredRecipes.length > 0 ? featuredRecipes.map((recipe: any, i: number) => {
-            return (
-              <BentoGridItem
-                key={recipe.id}
-                id={recipe.id}
-                title={recipe.title}
-                user={recipe} // Pass the whole recipe object to access profiles safely inside
-                time={recipe.cooking_time_minutes}
-                header={
-                   recipe.image_url ? (
-                    <div className="relative w-full aspect-square rounded-xl overflow-hidden">
-                     <Image 
-                         src={recipe.image_url} 
-                         alt={recipe.title} 
-                         fill
-                         className="object-cover transition-transform duration-500 group-hover/bento:scale-105"
-                         sizes="(max-width: 768px) 100vw, 33vw"
-                     />
-                    </div>
-                   ) : (
-                    <div className={`w-full aspect-square rounded-xl bg-gradient-to-br ${i === 0 ? 'from-zinc-800 via-zinc-900 to-black' : i === 1 ? 'from-slate-800 via-slate-900 to-black' : 'from-stone-800 via-stone-900 to-black'}`} />
-                   )
-                }
-                icon={<Terminal className="h-4 w-4 text-slate-500" />}
-                className=""
-                i={i}
-              />
-            );
-          }) : (
-             <div className="md:col-span-3 h-64 flex items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/5 text-slate-500">
-               <div className="flex flex-col items-center gap-2">
-                 <Sparkles className="h-8 w-8 opacity-20" />
-                 <span>추천 프롬프트를 준비 중입니다.</span>
-               </div>
-             </div>
-          )}
-        </BentoGrid>
-      </section>
+      {/* 4. Featured Recipes (Streaming) */}
+      <Suspense fallback={<div className="container h-[400px] bg-white/5 animate-pulse rounded-xl my-12" />}>
+         <FeaturedRecipes category={currentCategory} />
+      </Suspense>
 
-      {/* 2. Weekly Best - Horizontal Scroll */}
-      <section className="container px-4 py-8 border-t border-white/5">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-red-500" />
-            <h2 className="text-xl font-bold tracking-tight text-white">실시간 인기 레시피</h2>
-          </div>
-          <Link href="#" className="text-sm text-slate-400 hover:text-white flex items-center transition-colors">
-            전체보기 <ArrowRight className="ml-1 h-3 w-3" />
-          </Link>
-        </div>
-        
-        <Carousel className="w-full">
-          <CarouselContent className="-ml-4">
-            {weeklyRecipes.length > 0 ? weeklyRecipes.map((recipe: any) => (
-              <CarouselItem key={recipe.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                <Link href={`/recipe/${recipe.id}`} className="block group">
-                  <div className="rounded-xl overflow-hidden border border-white/10 bg-zinc-900/50 aspect-square mb-3 relative group-hover:border-white/30 transition-all shadow-lg">
-                    {recipe.image_url ? (
-                      <Image 
-                          src={recipe.image_url} 
-                          alt="" 
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-slate-800/50 flex items-center justify-center">
-                        <Terminal className="h-8 w-8 text-slate-700" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-zinc-300 font-mono flex items-center">
-                        <TrendingUp className="w-3 h-3 mr-1 text-red-400" /> {recipe.view_count || 0}
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-indigo-400 text-slate-200 transition-colors">{recipe.title}</h3>
-                  <p className="text-xs text-slate-500 line-clamp-1 mt-1">{recipe.description}</p>
-                </Link>
-              </CarouselItem>
-            )) : (
-              <CarouselItem className="pl-4 basis-full text-center py-10 text-slate-500 text-sm">
-                데이터가 충분하지 않습니다.
-              </CarouselItem>
-            )}
-          </CarouselContent>
-          <div className="hidden md:block">
-            <CarouselPrevious className="bg-slate-900/80 border-white/10 hover:bg-indigo-600 hover:text-white hover:border-indigo-500" />
-            <CarouselNext className="bg-slate-900/80 border-white/10 hover:bg-indigo-600 hover:text-white hover:border-indigo-500" />
-          </div>
-        </Carousel>
-      </section>
+      {/* 5. Weekly Best (Streaming) */}
+      <Suspense fallback={<div className="container h-[300px] bg-white/5 animate-pulse rounded-xl my-8" />}>
+         <WeeklyBestRecipes category={currentCategory} />
+      </Suspense>
 
-      {/* 3. Filters Section */}
+      {/* 6. Filter & All Recipes Grid (Streaming) */}
       <section className="container px-4 py-8 space-y-4">
-        {/* Category Filter Row */}
+        {/* Category Filter - Needs to be interactive immediately? It's static links mostly. */}
         <div className="overflow-x-auto pb-2 scrollbar-hide">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium mr-2 text-slate-400 flex items-center shrink-0"><Filter className="h-3 w-3 mr-1" /> Category:</span>
@@ -257,27 +124,10 @@ export default async function Home({
         </div>
       </section>
 
-      {/* 4. Main Grid Section */}
-      <section className="container px-4 pb-20">
-        <div className="flex items-center gap-2 mb-6">
-          <Layers className="h-5 w-5 text-indigo-500" />
-          <h2 className="text-xl font-bold tracking-tight text-white">{currentCategory === '전체' ? '전체 레시피' : `${currentCategory} 레시피`}</h2>
-        </div>
+      <Suspense fallback={<div className="container grid grid-cols-1 md:grid-cols-4 gap-6 h-[800px]"><div className="bg-white/5 animate-pulse rounded-xl col-span-4 h-full" /></div>}>
+         <AllRecipesGrid category={currentCategory} />
+      </Suspense>
 
-        {allRecipes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 border border-dashed border-white/10 rounded-lg bg-white/5">
-            <Command className="h-10 w-10 text-slate-600 mb-4" />
-            <p className="text-slate-500 text-sm">등록된 레시피가 없습니다.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {allRecipes.map((recipe: any) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
