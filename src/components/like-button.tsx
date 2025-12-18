@@ -18,6 +18,7 @@ interface LikeButtonProps {
 export function LikeButton({ recipeId, initialLiked, initialCount, userId, className }: LikeButtonProps & { className?: string }) {
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
