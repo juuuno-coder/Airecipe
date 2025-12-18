@@ -76,10 +76,10 @@ export function WeeklyRanking() {
                         </div>
                         <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
                              <Avatar className="h-4 w-4">
-                                <AvatarImage src={second.avatar_url || ""} />
+                                <AvatarImage src={second.username ? (second.avatar_url || "/anonymous-chef.png") : "/anonymous-chef.png"} />
                                 <AvatarFallback>U</AvatarFallback>
                              </Avatar>
-                             {second.username || "익명"}
+                             {second.username || "익명 쉐프"}
                         </div>
                     </div>
                 </Link>
@@ -108,10 +108,10 @@ export function WeeklyRanking() {
 
                     <div className="flex items-center gap-2 mt-4 text-sm text-slate-400 bg-black/20 px-3 py-1.5 rounded-full">
                             <Avatar className="h-5 w-5">
-                            <AvatarImage src={first.avatar_url || ""} />
+                            <AvatarImage src={first.username ? (first.avatar_url || "/anonymous-chef.png") : "/anonymous-chef.png"} />
                             <AvatarFallback>U</AvatarFallback>
                             </Avatar>
-                            {first.username || "익명"}
+                            {first.username || "익명 쉐프"}
                     </div>
                 </div>
             </Link>
@@ -132,10 +132,10 @@ export function WeeklyRanking() {
                         </div>
                         <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
                              <Avatar className="h-4 w-4">
-                                <AvatarImage src={third.avatar_url || ""} />
+                                <AvatarImage src={third.username ? (third.avatar_url || "/anonymous-chef.png") : "/anonymous-chef.png"} />
                                 <AvatarFallback>U</AvatarFallback>
                              </Avatar>
-                             {third.username || "익명"}
+                             {third.username || "익명 쉐프"}
                         </div>
                     </div>
                 </Link>
