@@ -94,7 +94,7 @@ export default function CreateRecipePage() {
           }
       }
       
-      const { error } = await supabase.from("recipes").insert({
+      const { data, error } = await supabase.from("recipes").insert({
         title,
         description,
         cooking_time_minutes: parseInt(cookingTime) || 0,
@@ -107,12 +107,12 @@ export default function CreateRecipePage() {
         before_image_url: isComparisonMode ? beforeImage : null,
         after_image_url: isComparisonMode ? afterImage : null,
         category,
-      });
+      }).select().single();
 
       if (error) throw error;
 
       toast.success("레시피가 성공적으로 게시되었습니다!");
-      router.push("/");
+      router.push(`/recipe/${data.id}`);
     } catch (error) {
       console.error("Error:", error);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

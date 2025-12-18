@@ -34,57 +34,43 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 1. Increment View Count (Fire and forget)
-  await supabase.rpc('increment_view_count', { p_recipe_id: id });
+  // 1. Increment View Count (Non-blocking)
+  supabase.rpc('increment_view_count', { p_recipe_id: id });
 
-  // 2. Fetch recipe with robustness
-  let recipe: any = null;
-  
-  // Try with profiles
-  const { data: recipeWithProfile, error: profileError } = await supabase
-    .from("recipes")
-    .select("*, profiles(*)")
-    .eq("id", id)
-    .single();
+  // 2. Fetch Data in Parallel
+  // We need to fetch the main recipe first to handle 404s gracefully, 
+  // but we can fetch related recipes concurrently if we assume the ID is valid.
+  // However, specifically for the main recipe logic (try profile -> fallback), 
+  // let's optimize it into a cleaner logic.
 
-  if (recipeWithProfile) {
-    recipe = recipeWithProfile;
-  } else {
-    // console.warn("Fetch with profile failed, trying fallback...", profileError?.message);
-    // Fallback without profile
-    const { data: rawRecipe, error: rawError } = await supabase
-        .from("recipes")
-        .select("*")
-        .eq("id", id)
-        .single();
+  // Parallelize the independent requests
+  const [recipeResult, relatedResult, likeResult] = await Promise.all([
+    // A. Main Recipe Fetch (Try single efficient join query first)
+    supabase.from("recipes").select("*, profiles(*)").eq("id", id).single(),
     
-    if (!rawRecipe) {
-        console.error("Recipe absolutely not found:", rawError);
-        notFound();
-    }
-    recipe = rawRecipe;
+    // B. Related Recipes
+    supabase.from("recipes")
+      .select("*, profiles(*)")
+      .neq("id", id)
+      .order("created_at", { ascending: false })
+      .limit(4),
+
+    // C. Like Status (Only if user exists)
+    user ? supabase.from("likes").select("*").eq("user_id", user.id).eq("recipe_id", id).single() : Promise.resolve({ data: null })
+  ]);
+
+
+  // Handle Recipe Result
+  let recipe = recipeResult.data;
+  if (!recipe) {
+      // Very rare edge case fallback if join failed but row exists (RLS issue maybe?)
+      const { data: rawRecipe } = await supabase.from("recipes").select("*").eq("id", id).single();
+      if (!rawRecipe) notFound();
+      recipe = rawRecipe;
   }
 
-  // 3. Fetch Related Recipes (Simple logic: latest 4 excluding current)
-  const { data: relatedRecipes } = await supabase
-    .from("recipes")
-    .select("*, profiles(*)") // Attempt join, but we know it might fail for some
-    .neq("id", id)
-    .order("created_at", { ascending: false })
-    .limit(4);
-
-
-  // 4. Check Like Status
-  let isLiked = false;
-  if (user) {
-    const { data: likeData } = await supabase
-        .from("likes")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("recipe_id", id)
-        .single();
-    if (likeData) isLiked = true;
-  }
+  const relatedRecipes = relatedResult.data;
+  const isLiked = !!likeResult.data;
 
   // Parse JSON fields
   let tools: any[] = [];
