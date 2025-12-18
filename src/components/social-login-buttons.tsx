@@ -6,15 +6,15 @@ import { loginWithSocial } from "@/app/(auth)/actions";
 
 export function SocialLoginButtons() {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <Button 
+    <div className="grid grid-cols-1 gap-4">
+      {/* <Button 
         variant="outline" 
         className="border-2 border-border font-bold h-11"
         onClick={async () => await loginWithSocial('github')}
       >
         <Github className="mr-2 h-4 w-4" />
         Github
-      </Button>
+      </Button> */}
       <Button 
         variant="outline" 
         className="border-2 border-border font-bold h-11"
