@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Sidebar } from "lucide-react"; // Import Sidebar Icon if needed, but we'll use a simple layout first
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -14,26 +14,29 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  // TODO: Check if user.role === 'admin' later. 
-  // For now, we allow any logged-in user to see it for development, 
-  // or you can implement the restrict logic immediately if 'role' column exists.
-
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200">
-      <div className="border-b border-white/5 bg-[#0b1121]">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <h1 className="font-bold text-xl text-white flex items-center gap-2">
-                <span className="bg-indigo-600/20 text-indigo-400 p-1 rounded-md border border-indigo-500/30 text-xs px-2">ADMIN</span>
-                대시보드
-            </h1>
-            <div className="text-sm text-slate-400">
-                관리자: <span className="text-white">{user.email}</span>
+    <div className="min-h-screen bg-[#020617] text-slate-200 flex">
+      {/* Fixed Sidebar */}
+      <AdminSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+        {/* Top Header */}
+        <header className="h-16 border-b border-white/5 bg-[#0b1121]/50 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-8">
+            <h1 className="font-semibold text-white">관리자 콘솔</h1>
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400 border border-indigo-500/30">
+                    A
+                </div>
+                <span className="text-sm text-slate-400">{user.email}</span>
             </div>
-        </div>
+        </header>
+
+        {/* Dynamic Page Content */}
+        <main className="flex-1 p-8 overflow-y-auto">
+            {children}
+        </main>
       </div>
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
     </div>
   );
 }
