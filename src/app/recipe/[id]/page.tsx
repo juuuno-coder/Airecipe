@@ -16,7 +16,9 @@ import { Suspense } from "react";
 import { RecipeActions } from "@/components/recipe-actions"; // Import Actions
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const revalidate = 0;
+import { ViewCounter } from "@/components/view-counter"; // Import ViewCounter
+
+export const revalidate = 60; // Cache for 60 seconds
 
 // Helper to determine model badge
 const getModelBadge = (text: string) => {
@@ -32,10 +34,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const supabase = await createClient();
 
-  // 1. Increment View Count (Non-blocking Fire & Forget)
-  supabase.rpc('increment_view_count', { p_recipe_id: id });
-
-  // 2. Fetch ONLY Recipe (Fastest possible query, public data)
+  // 1. Fetch ONLY Recipe (Fastest possible query, public data)
   const { data: recipeWithProfile, error: profileError } = await supabase
     .from("recipes")
     .select("*, profiles(*)")
@@ -351,7 +350,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
             </Suspense>
         </div>
 
-
+        <ViewCounter recipeId={id} />
       </div>
     </div>
   );
