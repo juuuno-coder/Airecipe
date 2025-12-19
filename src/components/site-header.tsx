@@ -1,11 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { Terminal, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Suspense } from "react";
 import { UserNav } from "@/components/user-nav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePathname } from "next/navigation";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  
+  // Hide header on admin pages
+  if (pathname?.startsWith("/admin")) {
+      return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#020617]/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between px-4 max-w-7xl mx-auto">
