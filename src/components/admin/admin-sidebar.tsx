@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Terminal } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Terminal, MessageSquare } from "lucide-react";
 
 const menuItems = [
   { href: "/admin", label: "대시보드", icon: LayoutDashboard },
   { href: "/admin/recipes", label: "레시피 관리", icon: FileText },
   { href: "/admin/users", label: "유저 관리", icon: Users },
+  { href: "/admin/comments", label: "댓글 관리", icon: MessageSquare },
   { href: "/admin/settings", label: "사이트 설정", icon: Settings },
 ];
 
