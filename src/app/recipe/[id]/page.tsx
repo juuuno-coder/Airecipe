@@ -222,7 +222,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                             <ImageComparison 
                                 beforeImage={recipe.before_image_url}
                                 afterImage={recipe.after_image_url}
-                                className="w-full aspect-[1/2] shadow-2xl border border-indigo-500/20 rounded-2xl overflow-hidden"
+                                className="w-full aspect-[1/1.6] shadow-2xl border border-indigo-500/20 rounded-2xl overflow-hidden"
                             />
                         </div>
                     ) : recipe.image_url && (
