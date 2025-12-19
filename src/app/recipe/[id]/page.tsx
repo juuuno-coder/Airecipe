@@ -12,10 +12,12 @@ import { LikeButton } from "@/components/like-button";
 import { CollectionModal } from "@/components/collection-modal"; 
 import { ImageComparison } from "@/components/image-comparison";
 import { revalidatePath } from "next/cache";
-import { RecipeCard } from "@/components/recipe-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CommentsSection from "@/components/comments-section";
 import { SuperVoteButton } from "@/components/super-vote-button";
+import { Suspense } from "react";
+import { RecipeRecommendations } from "@/components/recipe-recommendations";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const revalidate = 0;
 
@@ -34,43 +36,40 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 1. Increment View Count (Non-blocking)
+  // 1. Increment View Count (Non-blocking Fire & Forget)
   supabase.rpc('increment_view_count', { p_recipe_id: id });
 
-  // 2. Fetch Data in Parallel
-  // We need to fetch the main recipe first to handle 404s gracefully, 
-  // but we can fetch related recipes concurrently if we assume the ID is valid.
-  // However, specifically for the main recipe logic (try profile -> fallback), 
-  // let's optimize it into a cleaner logic.
+  // 2. Fetch Main Content ONLY (Blocking but fast)
+  // We prioritize the main recipe data.
+  const { data: recipeWithProfile, error: profileError } = await supabase
+    .from("recipes")
+    .select("*, profiles(*)")
+    .eq("id", id)
+    .single();
 
-  // Parallelize the independent requests
-  const [recipeResult, relatedResult, likeResult] = await Promise.all([
-    // A. Main Recipe Fetch (Try single efficient join query first)
-    supabase.from("recipes").select("*, profiles(*)").eq("id", id).single(),
-    
-    // B. Related Recipes
-    supabase.from("recipes")
-      .select("*, profiles(*)")
-      .neq("id", id)
-      .order("created_at", { ascending: false })
-      .limit(4),
+  let recipe: any = recipeWithProfile;
 
-    // C. Like Status (Only if user exists)
-    user ? supabase.from("likes").select("*").eq("user_id", user.id).eq("recipe_id", id).single() : Promise.resolve({ data: null })
-  ]);
-
-
-  // Handle Recipe Result
-  let recipe = recipeResult.data;
   if (!recipe) {
-      // Very rare edge case fallback if join failed but row exists (RLS issue maybe?)
-      const { data: rawRecipe } = await supabase.from("recipes").select("*").eq("id", id).single();
-      if (!rawRecipe) notFound();
-      recipe = rawRecipe;
+    // Fallback if join failed
+    const { data: rawRecipe, error } = await supabase.from("recipes").select("*").eq("id", id).single();
+    if (!rawRecipe) {
+        console.error("Recipe not found", error);
+        notFound();
+    }
+    recipe = rawRecipe;
   }
 
-  const relatedRecipes = relatedResult.data;
-  const isLiked = !!likeResult.data;
+  // 3. Fetch Like Status (Fast, single row lookup by primary key equivalent)
+  let isLiked = false;
+  if (user) {
+    const { data: likeData } = await supabase
+        .from("likes")
+        .select("id") // distinct selection
+        .eq("user_id", user.id)
+        .eq("recipe_id", id)
+        .maybeSingle(); // optimized
+    if (likeData) isLiked = true;
+  }
 
   // Parse JSON fields
   let tools: any[] = [];
@@ -124,7 +123,12 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                     <div className="aspect-square relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 group">
                         {recipe.image_url ? (
                              // eslint-disable-next/next/no-img-element
-                             <img src={recipe.image_url} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                             <img 
+                                src={recipe.image_url} 
+                                alt={recipe.title} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                loading="eager" // Priority loading
+                             />
                         ) : (
                              <div className="w-full h-full bg-slate-900 flex items-center justify-center">
                                  <Terminal className="h-16 w-16 text-slate-700" />
@@ -181,7 +185,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                         
                         <div className="flex-1" />
 
-                        {/* Share Button (Restored here next to Author if needed, or keeping standalone) */}
+                        {/* Share Button */}
                          <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5">
                                 <Share2 className="h-4 w-4" />
@@ -226,14 +230,14 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                             />
                         </div>
                     ) : recipe.image_url && (
-                        <div className="mt-8 rounded-2xl overflow-hidden border border-white/5 shadow-2xl aspect-[1/3] relative group">
-                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <div className="mt-8 rounded-2xl overflow-hidden border border-white/5 shadow-2xl aspect-[1/1.6] relative group">
+                             {/* eslint-disable-next/next/no-img-element */}
                              <img src={recipe.image_url} alt="Result" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                         </div>
                     )}
                 </section>
 
-                {/* 3. Tools & Prompts (Prominently Displaced) */}
+                {/* 3. Tools & Prompts */}
                 <section className="space-y-6">
                      <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-3">
                         <Terminal className="w-6 h-6 text-indigo-400" />
@@ -352,7 +356,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                                 <LikeButton 
                                     recipeId={recipe.id} 
                                     initialCount={recipe.likes?.[0]?.count || 0}
-                                    initialLiked={user ? recipe.likes?.some((l: any) => l.user_id === user.id) : false}
+                                    initialLiked={isLiked}
                                     userId={user?.id}
                                 />
                                 {user ? (
@@ -397,49 +401,18 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
             </div>
         </div>
 
-        {/* 5. Comments Section */}
+        {/* 5. Comments Section (Streamed) */}
         <div className="mt-20 pt-10 border-t border-white/5">
-            <CommentsSection recipeId={id} />
+            <Suspense fallback={<div className="h-[200px] w-full bg-slate-900/50 rounded-xl animate-pulse" />}>
+                <CommentsSection recipeId={id} />
+            </Suspense>
         </div>
 
-        {/* 6. Recommended / Related Recipes */}
-        <div className="mt-20 pt-10 border-t border-white/5">
-            <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-bold text-white flex items-center">
-                    <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                    이런 레시피는 어때요?
-                </h3>
-                <Link href="/" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-                    전체보기 &rarr;
-                </Link>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {relatedRecipes && relatedRecipes.length > 0 ? (
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    relatedRecipes.map((item: any) => (
-                        <RecipeCard key={item.id} recipe={item} />
-                    ))
-                ) : (
-                    <div className="col-span-4 py-16 rounded-3xl border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center text-slate-500">
-                        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-slate-600">
-                            <Terminal className="w-6 h-6" />
-                        </div>
-                        <p>관련된 레시피를 찾을 수 없습니다.</p>
-                    </div>
-                )}
-            </div>
-        </div>
+        {/* 6. Recommended / Related Recipes (Streamed) */}
+        <Suspense fallback={<div className="mt-20 h-[300px] bg-slate-900/50 rounded-xl animate-pulse" />}>
+            <RecipeRecommendations currentId={id} />
+        </Suspense>
       </div>
     </div>
   );
 }
-
-function SparklesIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-        </svg>
-    )
-}
-
