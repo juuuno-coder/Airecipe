@@ -13,7 +13,6 @@ import { revalidatePath } from "next/cache";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CommentsSection from "@/components/comments-section";
 import { Suspense } from "react";
-import { RecipeRecommendations } from "@/components/recipe-recommendations";
 import { RecipeActions } from "@/components/recipe-actions"; // Import Actions
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -352,10 +351,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
             </Suspense>
         </div>
 
-        {/* 6. Recommended / Related Recipes (Streamed) */}
-        <Suspense fallback={<div className="mt-20 h-[300px] bg-slate-900/50 rounded-xl animate-pulse" />}>
-            <RecipeRecommendations currentId={id} />
-        </Suspense>
+
       </div>
     </div>
   );
