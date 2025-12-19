@@ -36,11 +36,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* Global Background Ambience */}
+          {/* Performance Optimized Background */}
           <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px]" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-900/10 rounded-full blur-[120px]" />
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.05),transparent_50%)]" />
           </div>
 
           <div className="relative z-10 flex flex-col min-h-screen">
@@ -48,24 +46,7 @@ export default function RootLayout({
             <main className="flex-1">
               {children}
             </main>
-            <Toaster 
-              position="top-center" 
-              richColors 
-              closeButton 
-              expand={true}
-              toastOptions={{
-                classNames: {
-                  error: 'bg-red-600 border-red-500 text-white font-medium shadow-lg shadow-red-900/20',
-                  success: 'bg-green-600 border-green-500 text-white font-medium shadow-lg shadow-green-900/20',
-                  warning: 'bg-yellow-600 border-yellow-500 text-white font-medium',
-                  info: 'bg-blue-600 border-blue-500 text-white font-medium',
-                },
-                style: {
-                    marginTop: '20px',
-                    padding: '12px 16px',
-                }
-              }}
-            />
+            <Toaster position="top-center" richColors closeButton />
           </div>
         </ThemeProvider>
       </body>
