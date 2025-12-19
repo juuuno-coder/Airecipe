@@ -76,7 +76,7 @@ export function ImageComparison({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full aspect-video overflow-hidden rounded-xl select-none group cursor-ew-resize border border-white/10 shadow-lg ${className}`}
+      className={`relative w-full overflow-hidden rounded-xl select-none group cursor-ew-resize border border-white/10 shadow-lg ${className}`}
       onMouseDown={(e) => {
         setIsDragging(true);
         handleMove(e.clientX);
