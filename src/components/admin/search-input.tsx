@@ -2,25 +2,29 @@
 
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce"; 
-// Note: if use-debounce is not installed, we can use simple timeout. 
-// Assuming it's not, I'll implement manual debounce.
+import { useRef } from "react";
 
 export function SearchInput({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
   const { replace } = useRouter();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = (term: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (term) {
-      params.set("q", term);
-    } else {
-      params.delete("q");
+    // Clear existing timeout
+    if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
     }
-    // Simple debounce via timeout not strictly needed for basic admin use, 
-    // but better to avoid too many requests.
-    // However, direct replace is fine for now as it's admin page.
-    replace(`?${params.toString()}`);
+
+    // Set new timeout (Debounce 300ms)
+    timeoutRef.current = setTimeout(() => {
+        const params = new URLSearchParams(searchParams);
+        if (term) {
+          params.set("q", term);
+        } else {
+          params.delete("q");
+        }
+        replace(`?${params.toString()}`);
+    }, 300);
   };
 
   return (
@@ -31,11 +35,7 @@ export function SearchInput({ placeholder }: { placeholder: string }) {
         placeholder={placeholder}
         className="pl-9 h-10 w-full md:w-[300px] rounded-xl bg-slate-900 border border-white/10 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all"
         onChange={(e) => {
-            // Simple manual debounce
-            const value = e.target.value;
-            // Immediate update for better feeling, URL update can lag slightly
-            const timeoutId = setTimeout(() => handleSearch(value), 300);
-            return () => clearTimeout(timeoutId);
+            handleSearch(e.target.value);
         }}
         defaultValue={searchParams.get("q")?.toString()}
       />
