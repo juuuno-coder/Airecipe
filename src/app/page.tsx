@@ -49,8 +49,8 @@ export default async function Home({
                 <span className="font-semibold tracking-wide">AI Culinary Class Wars</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white pb-2 drop-shadow-2xl">
-                <span className="block text-slate-500 text-3xl md:text-5xl font-bold tracking-tight mb-2">계급장 떼고 붙자</span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white pb-2 drop-shadow-2xl">
+                <span className="block text-slate-500 text-2xl md:text-4xl font-bold tracking-tight mb-2">계급장 떼고 붙자</span>
                 오직 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-500">맛(Prompt)</span>으로 승부한다
             </h1>
             
