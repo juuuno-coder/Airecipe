@@ -1,22 +1,20 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Clock, Share2, Info, Eye, Zap, CalendarDays, Bookmark, MessageCircle, Settings, Trash2, Terminal, Cpu, BookOpen, User } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image"; // Import Next Image
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/copy-button";
 import ReactMarkdown from 'react-markdown';
 import { VariablePromptRenderer } from "@/components/prompt-variable-renderer";
-import { LikeButton } from "@/components/like-button";
-import { CollectionModal } from "@/components/collection-modal"; 
 import { ImageComparison } from "@/components/image-comparison";
 import { revalidatePath } from "next/cache";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CommentsSection from "@/components/comments-section";
-import { SuperVoteButton } from "@/components/super-vote-button";
 import { Suspense } from "react";
 import { RecipeRecommendations } from "@/components/recipe-recommendations";
+import { RecipeActions } from "@/components/recipe-actions"; // Import Actions
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const revalidate = 0;
@@ -34,13 +32,11 @@ const getModelBadge = (text: string) => {
 export default async function RecipeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Increment View Count (Non-blocking Fire & Forget)
   supabase.rpc('increment_view_count', { p_recipe_id: id });
 
-  // 2. Fetch Main Content ONLY (Blocking but fast)
-  // We prioritize the main recipe data.
+  // 2. Fetch ONLY Recipe (Fastest possible query, public data)
   const { data: recipeWithProfile, error: profileError } = await supabase
     .from("recipes")
     .select("*, profiles(*)")
@@ -50,7 +46,6 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
   let recipe: any = recipeWithProfile;
 
   if (!recipe) {
-    // Fallback if join failed
     const { data: rawRecipe, error } = await supabase.from("recipes").select("*").eq("id", id).single();
     if (!rawRecipe) {
         console.error("Recipe not found", error);
@@ -58,18 +53,8 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
     }
     recipe = rawRecipe;
   }
-
-  // 3. Fetch Like Status (Fast, single row lookup by primary key equivalent)
-  let isLiked = false;
-  if (user) {
-    const { data: likeData } = await supabase
-        .from("likes")
-        .select("id") // distinct selection
-        .eq("user_id", user.id)
-        .eq("recipe_id", id)
-        .maybeSingle(); // optimized
-    if (likeData) isLiked = true;
-  }
+  
+  // No Auth check here! Auth is deferred to RecipeActions component.
 
   // Parse JSON fields
   let tools: any[] = [];
@@ -86,16 +71,6 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
 
   const badgeInfo = getModelBadge(recipe.description + " " + JSON.stringify(tools));
   const isRichText = steps.length === 1 && (steps[0].trim().startsWith('<') || steps[0].length > 200);
-  const isOwner = user?.id === recipe.user_id;
-
-  // Server Action for Deletion
-  async function deleteRecipe() {
-    "use server";
-    const sb = await createClient();
-    await sb.from("recipes").delete().eq("id", id);
-    revalidatePath("/");
-    redirect("/");
-  }
 
   return (
     <div className="min-h-screen bg-[#020617] selection:bg-indigo-500/30 text-slate-200">
@@ -105,8 +80,13 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
         {/* Blurred Background */}
         <div className="absolute inset-0 z-0">
              {recipe.image_url && (
-                // eslint-disable-next/next/no-img-element
-                <img src={recipe.image_url} alt="" className="w-full h-full object-cover opacity-20 blur-3xl scale-125" />
+                <Image 
+                    src={recipe.image_url} 
+                    alt="" 
+                    fill
+                    className="object-cover opacity-20 blur-3xl scale-125 select-none pointer-events-none"
+                    priority
+                />
              )}
              <div className="absolute inset-0 bg-[#0a0a0a]/80" />
              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
@@ -122,12 +102,13 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                 <div className="w-full md:w-[320px] shrink-0">
                     <div className="aspect-square relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 group">
                         {recipe.image_url ? (
-                             // eslint-disable-next/next/no-img-element
-                             <img 
+                             <Image 
                                 src={recipe.image_url} 
                                 alt={recipe.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                loading="eager" // Priority loading
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                priority // Critical for LCP
+                                sizes="(max-width: 768px) 100vw, 320px"
                              />
                         ) : (
                              <div className="w-full h-full bg-slate-900 flex items-center justify-center">
@@ -166,7 +147,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                      </div>
 
                      <div className="flex items-center gap-4 pt-2">
-                        {/* Author Profile (Blind Mode Logic) */}
+                        {/* Author Profile */}
                         <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full border border-white/5 hover:bg-white/10 transition-colors cursor-default">
                              <Avatar className="h-8 w-8 border border-white/10">
                                 <AvatarImage src={recipe.is_anonymous ? undefined : recipe.profiles?.avatar_url} />
@@ -178,7 +159,6 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
                                  <span className="text-xs text-slate-400">Recipe by</span>
                                  <span className="text-sm font-semibold text-slate-200 flex items-center gap-2">
                                     {recipe.is_anonymous ? "Blind Chef" : (recipe.profiles?.username || "익명 쉐프")}
-                                    {isOwner && <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 rounded ml-1">Me</span>}
                                  </span>
                              </div>
                         </div>
@@ -335,50 +315,14 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ i
             <div className="lg:col-span-4 space-y-8">
                 <div className="sticky top-24 space-y-6">
                     
-                    {/* Primary Action Card */}
-                    <Card className="border-0 bg-gradient-to-b from-indigo-900/20 to-slate-900/20 backdrop-blur-2xl shadow-2xl overflow-hidden ring-1 ring-white/10 rounded-3xl">
-                        <CardHeader className="pb-2 border-b border-white/5">
-                             <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                Actions
-                             </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-6 space-y-4">
-                            <SuperVoteButton recipeId={recipe.id} userId={user?.id} />
-
-                            <Button className="w-full h-12 text-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20 rounded-xl transition-all hover:scale-[1.02]" asChild>
-                                <Link href="/create">
-                                    <Cpu className="mr-2 h-5 w-5" /> 나도 레시피 등록하기
-                                </Link>
-                            </Button>
-                            
-                            <div className="flex flex-wrap gap-3">
-                                <LikeButton 
-                                    recipeId={recipe.id} 
-                                    initialCount={recipe.likes?.[0]?.count || 0}
-                                    initialLiked={isLiked}
-                                    userId={user?.id}
-                                />
-                                {user ? (
-                                    <CollectionModal recipeId={recipe.id} userId={user.id} />
-                                ) : (
-                                    <Button variant="outline" className="flex-1 rounded-xl h-12 border-white/10" asChild>
-                                        <Link href="/login">
-                                            <Bookmark className="mr-2 h-4 w-4" /> 저장
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-
-                            {isOwner && (
-                                <Button variant="outline" size="sm" asChild className="w-full mt-2 text-slate-300 hover:text-white border-white/10 hover:bg-white/5 rounded-lg">
-                                    <Link href={`/recipe/${recipe.id}/edit`}>
-                                        <Settings className="mr-2 h-4 w-4" /> 레시피 수정
-                                    </Link>
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Primary Action Card (Streamed!) */}
+                    <Suspense fallback={<div className="h-[300px] w-full bg-slate-900/50 rounded-3xl animate-pulse" />}>
+                        <RecipeActions 
+                            recipeId={recipe.id} 
+                            initialLikeCount={recipe.likes?.[0]?.count || 0}
+                            authorId={recipe.user_id}
+                        />
+                    </Suspense>
 
                     {/* Meta Info Card */}
                     <div className="p-6 rounded-3xl bg-slate-900/20 border border-white/5 backdrop-blur-sm space-y-4">
