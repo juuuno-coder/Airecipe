@@ -6,7 +6,7 @@ import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
 import CommentsSection from "@/components/comments-section";
 
-export const revalidate = 3600; // 1시간 캐싱
+export const revalidate = 0; // 디버깅을 위해 캐싱 끄기
 
 export default async function RecipePage({
   params,
