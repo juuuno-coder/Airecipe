@@ -2,67 +2,50 @@
 
 import Link from "next/link";
 import { Terminal, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Suspense } from "react";
 import { UserNav } from "@/components/user-nav";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePathname } from "next/navigation";
 
 export function SiteHeader() {
   const pathname = usePathname();
   
-  // Hide header on admin pages
-  if (pathname?.startsWith("/admin")) {
-      return null;
-  }
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#020617]/80 backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between px-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]">
-              <Terminal className="h-5 w-5" />
-            </div>
-            <span className="tracking-tight text-slate-100">AI.RECIPE</span>
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.05] bg-[#020617]/90">
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        
+        {/* Logo */}
+        <Link href="/" className="flex items-center space-x-2 shrink-0 group">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+             <Terminal className="h-5 w-5 text-white" />
+          </div>
+          <span className="font-black text-xl tracking-tighter text-white">AI.RECIPE</span>
+        </Link>
+
+        {/* Search - Simplified for speed */}
+        <div className="hidden md:flex flex-1 max-w-md relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Search recipes..." 
+            className="w-full h-9 bg-white/5 border border-white/10 rounded-full pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:bg-white/[0.08] transition-all"
+          />
+        </div>
+
+        {/* Navigation & User */}
+        <div className="flex items-center gap-3">
+          <Link href="/create" className="hidden sm:block">
+            <button className="h-9 px-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all hover:shadow-[0_0_15px_rgba(79,70,229,0.4)]">
+                레시피 등록
+            </button>
           </Link>
-
-          {/* Desktop Navbar */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-            <Link href="/" className="hover:text-white transition-colors">
-              홈
-            </Link>
-            <Link href="/ranking" className="hover:text-white transition-colors">
-              주간 랭킹
-            </Link>
-            <Link href="/hall-of-fame" className="hover:text-white transition-colors">
-              명예의 전당
-            </Link>
-          </nav>
+          <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
+          <Suspense fallback={<div className="w-8 h-8 rounded-full bg-white/5 animate-pulse" />}>
+             <UserNav />
+          </Suspense>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Desktop Search Bar (Compact) */}
-          <div className="hidden lg:flex relative w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-            <Input
-              type="search"
-              placeholder="검색..."
-              className="pl-9 h-9 bg-white/5 border-white/10 focus:bg-white/10 focus:border-indigo-500/50 transition-all text-xs text-slate-200 placeholder:text-slate-600 rounded-full"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Suspense fallback={
-                <div className="flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 rounded-full bg-slate-800" />
-                    <Skeleton className="h-8 w-20 rounded-full bg-slate-800" />
-                </div>
-            }>
-                <UserNav />
-            </Suspense>
-          </div>
-        </div>
       </div>
     </header>
   );

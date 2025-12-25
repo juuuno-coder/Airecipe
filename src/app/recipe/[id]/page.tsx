@@ -38,7 +38,8 @@ export default async function RecipePage({
                 <span>{recipe.category || "AI WORKFLOW"}</span>
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none sm:leading-tight">
+            {/* 제목 크기 축소 (4xl/6xl -> 2xl/4xl) */}
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-normal sm:leading-tight">
                 {recipe.title}
             </h1>
             
@@ -81,9 +82,9 @@ export default async function RecipePage({
       {/* 3. 본문 레이아웃 (단일 컬럼 집중형) */}
       <div className="max-w-3xl mx-auto px-4 pb-24">
         
-        {/* 설명 섹션 */}
+        {/* 설명 섹션 (줄바꿈 적용) */}
         <section className="mb-16">
-            <p className="text-xl text-slate-300 leading-relaxed italic border-l-4 border-indigo-500 pl-6 py-2 bg-indigo-500/5">
+            <p className="text-xl text-slate-300 leading-relaxed italic border-l-4 border-indigo-500 pl-6 py-2 bg-indigo-500/5 whitespace-pre-wrap">
                 "{recipe.description}"
             </p>
         </section>
@@ -118,7 +119,8 @@ export default async function RecipePage({
                                 {i + 1}
                             </div>
                             <div className="flex-1 pt-1">
-                                <div className="text-slate-200 text-lg leading-loose bg-white/[0.02] p-8 rounded-3xl border border-white/5 hover:bg-white/[0.04] transition-all">
+                                {/* 스텝 내용 줄바꿈 적용 */}
+                                <div className="text-slate-200 text-lg leading-loose bg-white/[0.02] p-8 rounded-3xl border border-white/5 hover:bg-white/[0.04] transition-all whitespace-pre-wrap">
                                     {step}
                                 </div>
                             </div>
