@@ -4,7 +4,7 @@ import { Clock, Eye, User, Zap, ChevronRight } from "lucide-react";
 import { Suspense } from "react";
 import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
-import { CommentsSection } from "@/components/comments-section";
+import CommentsSection from "@/components/comments-section";
 
 export const revalidate = 3600; // 1시간 캐싱
 
