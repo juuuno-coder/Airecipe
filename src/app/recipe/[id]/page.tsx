@@ -6,7 +6,8 @@ import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
 import CommentsSection from "@/components/comments-section";
 
-export const revalidate = 3600; // 1시간 캐싱 복구 (성능 최적화)
+// [긴급 수정] 500 에러 방지를 위해 캐싱 끄기
+export const revalidate = 0; 
 
 export default async function RecipePage({
   params,
@@ -25,6 +26,10 @@ export default async function RecipePage({
   if (error || !recipe) {
     return <div className="p-20 text-center text-slate-400">레시피를 찾을 수 없습니다.</div>;
   }
+
+  // [안전 장치] 프로필이 없거나 날짜가 이상해도 터지지 않게 기본값 처리
+  const author = recipe.profiles || { username: "익명 쉐프", avatar_url: null };
+  const formattedDate = recipe.created_at ? new Date(recipe.created_at).toLocaleDateString() : "Unknown Date";
 
   return (
     <div className="bg-[#020617] min-h-screen">
@@ -46,20 +51,20 @@ export default async function RecipePage({
             <div className="flex items-center justify-center gap-6 py-4 border-y border-white/5">
                 <div className="flex items-center gap-2 group">
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase overflow-hidden">
-                        {recipe.profiles?.avatar_url ? (
-                            <Image src={recipe.profiles.avatar_url} alt={recipe.profiles.username} width={40} height={40} />
-                        ) : recipe.profiles?.username?.[0]}
+                        {author.avatar_url ? (
+                            <Image src={author.avatar_url} alt={author.username || "User"} width={40} height={40} />
+                        ) : (author.username?.[0] || "?")}
                     </div>
-                    <span className="text-slate-300 text-sm font-semibold">{recipe.profiles?.username}</span>
+                    <span className="text-slate-300 text-sm font-semibold">{author.username}</span>
                 </div>
                 <div className="h-4 w-px bg-white/10 hidden sm:block" />
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                     <Clock className="w-4 h-4" />
-                    <span>{new Date(recipe.created_at).toLocaleDateString()}</span>
+                    <span>{formattedDate}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
                     <Eye className="w-4 h-4" />
-                    <span>{recipe.view_count.toLocaleString()}</span>
+                    <span>{recipe.view_count?.toLocaleString() || 0}</span>
                 </div>
             </div>
         </div>
@@ -68,14 +73,16 @@ export default async function RecipePage({
       {/* 2. 대형 히어로 이미지 (최적화) */}
       <div className="max-w-screen-lg mx-auto px-4 mb-16">
         <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-[0_0_50px_-12px_rgba(79,70,229,0.3)] border border-white/10">
-            <Image
-                src={recipe.image_url}
-                alt={recipe.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 1024px) 100vw, 1024px"
-            />
+            {recipe.image_url && (
+                <Image
+                    src={recipe.image_url}
+                    alt={recipe.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 1024px"
+                />
+            )}
         </div>
       </div>
 
@@ -96,7 +103,7 @@ export default async function RecipePage({
                 준비물 및 프롬프트
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recipe.ingredients.map((ing: string, i: number) => (
+                {recipe.ingredients?.map((ing: string, i: number) => (
                     <div key={i} className="flex items-center p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all group">
                         <ChevronRight className="w-4 h-4 text-indigo-500 mr-2 opacity-50 group-hover:translate-x-1 transition-transform" />
                         <span className="text-slate-300">{ing}</span>
@@ -112,7 +119,7 @@ export default async function RecipePage({
                 제작 가이드
             </h3>
             <div className="space-y-12">
-                {recipe.steps.map((step: string, i: number) => (
+                {recipe.steps?.map((step: string, i: number) => (
                     <div key={i} className="relative">
                         <div className="flex items-start gap-8">
                             <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-lg">
