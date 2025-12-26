@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'vlvuoyapnliginrppjxs.supabase.co', // Your Supabase Project ID
+        hostname: 'yobjuoaitgrizavmasec.supabase.co', // Your Supabase Project ID
       },
       // Fallback for any Supabase URL just in case
       {
