@@ -23,7 +23,16 @@ export default async function RecipePage({
     .single();
 
   if (error || !recipe) {
-    return <div className="p-20 text-center text-slate-400">레시피를 찾을 수 없습니다.</div>;
+    return (
+      <div className="p-20 text-center space-y-4">
+        <div className="text-xl text-red-500 font-bold">레시피 로딩 실패</div>
+        <div className="p-4 bg-slate-900 rounded text-left text-sm font-mono text-slate-300 overflow-auto max-w-2xl mx-auto border border-red-500/20">
+          <p><strong>URL ID:</strong> {id}</p>
+          <p><strong>Error:</strong> {error ? JSON.stringify(error, null, 2) : "No Error Object"}</p>
+          <p><strong>Recipe Data:</strong> {recipe ? "Exists" : "NULL"}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
