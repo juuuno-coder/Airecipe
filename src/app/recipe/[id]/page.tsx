@@ -103,7 +103,8 @@ export default async function RecipePage({
                 준비물 및 프롬프트
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recipe.ingredients?.map((ing: string, i: number) => (
+                {/* [수정] ingredients가 null일 경우 빈 배열 처리 */}
+                {(recipe.ingredients || []).map((ing: string, i: number) => (
                     <div key={i} className="flex items-center p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all group">
                         <ChevronRight className="w-4 h-4 text-indigo-500 mr-2 opacity-50 group-hover:translate-x-1 transition-transform" />
                         <span className="text-slate-300">{ing}</span>
@@ -119,7 +120,8 @@ export default async function RecipePage({
                 제작 가이드
             </h3>
             <div className="space-y-12">
-                {recipe.steps?.map((step: string, i: number) => (
+                {/* [수정] steps가 null일 경우 빈 배열 처리 */}
+                {(recipe.steps || []).map((step: string, i: number) => (
                     <div key={i} className="relative">
                         <div className="flex items-start gap-8">
                             <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-lg">
