@@ -19,7 +19,7 @@ export default async function RecipePage({
 
   const { data: recipe, error } = await supabase
     .from("recipes")
-    .select("*, profiles(username, avatar_url)")
+    .select("*, profiles(username, avatar_url), likes(count)")
     .eq("id", id)
     .single();
 
