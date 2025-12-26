@@ -7,11 +7,18 @@ export default async function CommentsSection({ recipeId }: { recipeId: string }
   const supabase = await createClient();
   
   // Fetch comments with user profiles
-  const { data: comments } = await supabase
+  // Fetch comments with user profiles (Safely)
+  const { data: comments, error } = await supabase
     .from("comments")
     .select("*, profiles(*)")
     .eq("recipe_id", recipeId)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Comments Fetch Error:", error);
+    // 에러 발생 시 빈 배열 반환하여 페이지 크래시 방지
+    // comments = [] (const라 재할당 불가하므로 아래 렌더링에서 처리)
+  }
 
   return (
     <div className="space-y-8">
