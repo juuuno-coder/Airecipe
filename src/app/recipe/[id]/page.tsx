@@ -6,7 +6,7 @@ import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
 import CommentsSection from "@/components/comments-section";
 
-export const revalidate = 0; // 디버깅을 위해 캐싱 끄기
+export const revalidate = 3600; // 1시간 캐싱 복구 (성능 최적화)
 
 export default async function RecipePage({
   params,
@@ -23,16 +23,7 @@ export default async function RecipePage({
     .single();
 
   if (error || !recipe) {
-    return (
-      <div className="p-20 text-center space-y-4">
-        <div className="text-xl text-red-500 font-bold">레시피 로딩 실패</div>
-        <div className="p-4 bg-slate-900 rounded text-left text-sm font-mono text-slate-300 overflow-auto max-w-2xl mx-auto border border-red-500/20">
-          <p><strong>URL ID:</strong> {id}</p>
-          <p><strong>Error:</strong> {error ? JSON.stringify(error, null, 2) : "No Error Object"}</p>
-          <p><strong>Recipe Data:</strong> {recipe ? "Exists" : "NULL"}</p>
-        </div>
-      </div>
-    );
+    return <div className="p-20 text-center text-slate-400">레시피를 찾을 수 없습니다.</div>;
   }
 
   return (
@@ -47,7 +38,7 @@ export default async function RecipePage({
                 <span>{recipe.category || "AI WORKFLOW"}</span>
             </div>
             
-            {/* 제목 크기 축소 (4xl/6xl -> 2xl/4xl) */}
+            {/* 제목 크기 (2xl/4xl 유지) */}
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-normal sm:leading-tight">
                 {recipe.title}
             </h1>
