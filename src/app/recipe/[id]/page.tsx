@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
 import CommentsSection from "@/components/comments-section";
+import { VariablePromptRenderer } from "@/components/prompt-variable-renderer";
 
 // [긴급 수정] 500 에러 방지를 위해 캐싱 끄기
 export const revalidate = 0; 
@@ -103,11 +104,18 @@ export default async function RecipePage({
                 준비물 및 프롬프트
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* [수정] ingredients가 null일 경우 빈 배열 처리 */}
-                {(recipe.ingredients || []).map((ing: string, i: number) => (
-                    <div key={i} className="flex items-center p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all group">
-                        <ChevronRight className="w-4 h-4 text-indigo-500 mr-2 opacity-50 group-hover:translate-x-1 transition-transform" />
-                        <span className="text-slate-300">{ing}</span>
+                {/* [수정] ingredients가 객체 배열({item, quantity})인 경우 대응 */}
+                {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((ing: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all group">
+                        <div className="flex items-center">
+                            <ChevronRight className="w-4 h-4 text-indigo-500 mr-2 opacity-50 group-hover:translate-x-1 transition-transform" />
+                            <span className="text-slate-300 font-medium">{typeof ing === 'string' ? ing : ing.item}</span>
+                        </div>
+                        {ing.quantity && (
+                            <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">
+                                {ing.quantity}
+                            </span>
+                        )}
                     </div>
                 ))}
             </div>
@@ -117,21 +125,18 @@ export default async function RecipePage({
         <section className="mb-24">
             <h3 className="text-2xl font-bold text-white mb-10 flex items-center gap-3">
                 <span className="w-8 h-1 bg-indigo-500 rounded-full" />
-                제작 가이드
+                제작 가이드 및 프롬프트
             </h3>
             <div className="space-y-12">
-                {/* [수정] steps가 null일 경우 빈 배열 처리 */}
-                {(recipe.steps || []).map((step: string, i: number) => (
+                {/* [수정] steps 대신 instructions 사용, 가변 프롬프트 렌더러 적용 */}
+                {(Array.isArray(recipe.instructions) ? recipe.instructions : []).map((step: string, i: number) => (
                     <div key={i} className="relative">
                         <div className="flex items-start gap-8">
                             <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-lg">
                                 {i + 1}
                             </div>
                             <div className="flex-1 pt-1">
-                                {/* 스텝 내용 줄바꿈 적용 */}
-                                <div className="text-slate-200 text-lg leading-loose bg-white/[0.02] p-8 rounded-3xl border border-white/5 hover:bg-white/[0.04] transition-all whitespace-pre-wrap">
-                                    {step}
-                                </div>
+                                <VariablePromptRenderer text={step} />
                             </div>
                         </div>
                     </div>
