@@ -1,10 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
-import { Link } from "lucide-react"; // Wait, wrong import
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SuperVoteButton } from "@/components/super-vote-button";
 import { LikeButton } from "@/components/like-button";
-import { CollectionModal } from "@/components/collection-modal"; 
+import { CollectionModal } from "@/components/collection-modal";
 import { Settings, Bookmark, Cpu } from "lucide-react";
 import NextLink from "next/link"; // Specific import to avoid conflict
 
@@ -20,7 +18,7 @@ export async function RecipeActions({ recipeId, initialLikeCount, authorId }: { 
             .select("id")
             .eq("user_id", user.id)
             .eq("recipe_id", recipeId)
-            .maybeSingle(); 
+            .maybeSingle();
         if (likeData) isLiked = true;
     }
 
@@ -35,17 +33,15 @@ export async function RecipeActions({ recipeId, initialLikeCount, authorId }: { 
                     </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
-                <SuperVoteButton recipeId={recipeId} userId={user?.id} />
-
                 <Button className="w-full h-12 text-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20 rounded-xl transition-all hover:scale-[1.02]" asChild>
                     <NextLink href="/create">
                         <Cpu className="mr-2 h-5 w-5" /> 나도 레시피 등록하기
                     </NextLink>
                 </Button>
-                
+
                 <div className="flex flex-wrap gap-3">
-                    <LikeButton 
-                        recipeId={recipeId} 
+                    <LikeButton
+                        recipeId={recipeId}
                         initialCount={initialLikeCount}
                         initialLiked={isLiked}
                         userId={user?.id}

@@ -4,6 +4,7 @@ import { Clock, Eye, User, Zap, ChevronRight } from "lucide-react";
 import { Suspense } from "react";
 import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
+import { VoteCard } from "@/components/vote-card";
 import CommentsSection from "@/components/comments-section";
 import { VariablePromptRenderer } from "@/components/prompt-variable-renderer";
 import { ImageComparison } from "@/components/image-comparison";
@@ -139,7 +140,11 @@ export default async function RecipePage({
             {/* 사이드바 (우측) */}
             <div className="space-y-10">
                 {/* 액션 카드 (상단 배치) */}
-                <div className="sticky top-24 z-10">
+                <div className="sticky top-24 z-10 space-y-6">
+                    <Suspense fallback={<div className="h-48 w-full bg-amber-500/10 rounded-3xl animate-pulse" />}>
+                        <VoteCard recipeId={id} />
+                    </Suspense>
+
                     <Suspense fallback={<div className="h-64 w-full bg-slate-900 rounded-3xl animate-pulse" />}>
                         <RecipeActions
                             recipeId={id}
