@@ -32,130 +32,153 @@ export default async function RecipePage({
   const formattedDate = recipe.created_at ? new Date(recipe.created_at).toLocaleDateString() : "Unknown Date";
 
   return (
-    <div className="bg-[#020617] min-h-screen">
+    <div className="bg-[#020617] min-h-screen text-slate-200">
       <ViewCounter recipeId={id} />
 
-      {/* 1. 집중된 헤더 영역 */}
-      <div className="max-w-screen-xl mx-auto px-4 pt-12 pb-8">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold ring-1 ring-inset ring-indigo-500/20">
-                <Zap className="w-3 h-3" />
-                <span>{recipe.category || "AI WORKFLOW"}</span>
+      {/* 1. New Header Layout (Matching Skeleton) */}
+      <div className="relative w-full py-12 md:py-20 overflow-hidden border-b border-white/5 bg-[#0a0a0a]">
+        {/* Background Gradient Effect (Optional to make it nicer) */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-500/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+
+        <div className="container max-w-[1400px] px-4 relative z-10 mx-auto">
+            {/* Category Badge */}
+            <div className="mb-8">
+                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold ring-1 ring-inset ring-indigo-500/20">
+                    <Zap className="w-3 h-3" />
+                    <span>{recipe.category || "AI WORKFLOW"}</span>
+                </div>
             </div>
 
-            {/* 제목 크기 (2xl/4xl 유지) */}
-            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-normal sm:leading-tight">
-                {recipe.title}
-            </h1>
-
-            <div className="flex items-center justify-center gap-6 py-4 border-y border-white/5">
-                <div className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase overflow-hidden">
-                        {author.avatar_url ? (
-                            <Image src={author.avatar_url} alt={author.username || "User"} width={40} height={40} />
-                        ) : (author.username?.[0] || "?")}
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start md:items-end">
+                {/* Image Section (Matches Skeleton w-full md:w-[320px]) */}
+                <div className="w-full md:w-[320px] shrink-0">
+                    <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-800">
+                         {recipe.before_image_url && recipe.after_image_url ? (
+                            <ImageComparison
+                            beforeImage={recipe.before_image_url}
+                            afterImage={recipe.after_image_url}
+                            className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            recipe.image_url && (
+                                <Image
+                                    src={recipe.image_url}
+                                    alt={recipe.title}
+                                    fill
+                                    className="object-cover"
+                                    priority
+                                    sizes="(max-width: 768px) 100vw, 320px"
+                                />
+                            )
+                        )}
                     </div>
-                    <span className="text-slate-300 text-sm font-semibold">{author.username}</span>
                 </div>
-                <div className="h-4 w-px bg-white/10 hidden sm:block" />
-                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                    <Clock className="w-4 h-4" />
-                    <span>{formattedDate}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                    <Eye className="w-4 h-4" />
-                    <span>{recipe.view_count?.toLocaleString() || 0}</span>
+
+                {/* Text Info Section */}
+                <div className="flex-1 space-y-6 w-full">
+                     <div className="space-y-4">
+                        {/* Title */}
+                        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                            {recipe.title}
+                        </h1>
+
+                         {/* Meta Info Row */}
+                        <div className="flex flex-wrap items-center gap-6 text-sm text-slate-400">
+                             <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                <span>{formattedDate}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Eye className="w-4 h-4" />
+                                <span>{recipe.view_count?.toLocaleString() || 0} views</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                <span>{author.username}</span>
+                            </div>
+                        </div>
+                     </div>
+
+                     {/* Author Profile (Mini) */}
+                     <div className="flex items-center gap-4 pt-2 border-t border-white/5 mt-6">
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase overflow-hidden shrink-0">
+                            {author.avatar_url ? (
+                                <Image src={author.avatar_url} alt={author.username || "User"} width={40} height={40} />
+                            ) : (author.username?.[0] || "?")}
+                        </div>
+                        <div>
+                            <p className="text-xs text-slate-500">Created by</p>
+                            <p className="text-white font-bold">{author.username}</p>
+                        </div>
+                     </div>
                 </div>
             </div>
         </div>
       </div>
 
-      {/* 2. 대형 히어로 이미지 (최적화) */}
-      <div className="max-w-screen-lg mx-auto px-4 mb-16">
-        <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-[0_0_50px_-12px_rgba(79,70,229,0.3)] border border-white/10">
-            {recipe.before_image_url && recipe.after_image_url ? (
-                <ImageComparison
-                  beforeImage={recipe.before_image_url}
-                  afterImage={recipe.after_image_url}
-                  className="h-full w-full object-cover"
-                />
-            ) : (
-                recipe.image_url && (
-                    <Image
-                        src={recipe.image_url}
-                        alt={recipe.title}
-                        fill
-                        className="object-cover"
-                        priority
-                        sizes="(max-width: 1024px) 100vw, 1024px"
-                    />
-                )
-            )}
-        </div>
-      </div>
+      {/* 2. Content Layout (Matching Skeleton 8:4 Grid) */}
+      <div className="container max-w-[1400px] px-4 py-16 mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
-      {/* 3. 본문 레이아웃 (2컬럼: 메인 + 사이드바) */}
-      <div className="max-w-screen-xl mx-auto px-4 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-
-            {/* 메인 컬럼 (좌측) */}
-            <div className="lg:col-span-2 space-y-16">
-                {/* 설명 섹션 */}
-                <section>
-                    <p className="text-xl text-slate-300 leading-relaxed italic border-l-4 border-indigo-500 pl-6 py-2 bg-indigo-500/5 whitespace-pre-wrap">
-                        "{recipe.description}"
+            {/* Main Content (Left, col-span-8) */}
+            <div className="lg:col-span-8 space-y-16">
+                 {/* Description */}
+                 <section className="space-y-6">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <span className="w-1 h-6 bg-indigo-500 rounded-full" />
+                        소개
+                    </h3>
+                    <p className="text-lg text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {recipe.description}
                     </p>
-                </section>
+                 </section>
 
-                {/* 단계별 가이드 */}
-                <section>
-                    <h3 className="text-2xl font-bold text-white mb-10 flex items-center gap-3">
-                        <span className="w-8 h-1 bg-indigo-500 rounded-full" />
-                        제작 가이드 및 프롬프트
+                 {/* Instructions */}
+                 <section className="space-y-8">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <span className="w-1 h-6 bg-indigo-500 rounded-full" />
+                        제작 가이드
                     </h3>
                     <div className="space-y-12">
                         {(Array.isArray(recipe.instructions) ? recipe.instructions : []).map((step: string, i: number) => (
-                            <div key={i} className="relative">
-                                <div className="flex items-start gap-8">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-lg">
-                                        {i + 1}
-                                    </div>
-                                    <div className="flex-1 pt-1">
-                                        <VariablePromptRenderer text={step} />
-                                    </div>
+                            <div key={i} className="relative pl-4 border-l border-white/10 pb-8 last:pb-0 last:border-0">
+                                <div className="absolute -left-[21px] top-0 w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-indigo-400 font-bold text-lg shadow-lg">
+                                    {i + 1}
+                                </div>
+                                <div className="pt-2 pl-4">
+                                    <VariablePromptRenderer text={step} />
                                 </div>
                             </div>
                         ))}
                     </div>
-                </section>
+                 </section>
 
-                {/* 댓글 섹션 (메인 컬럼 하단으로 이동) */}
-                <div className="pt-16 border-t border-white/5">
+                 {/* Comments */}
+                 <div className="pt-16 border-t border-white/5">
                     <Suspense fallback={<div className="h-40 w-full bg-slate-800 animate-pulse rounded-2xl" />}>
                         <CommentsSection recipeId={id} />
                     </Suspense>
-                </div>
+                 </div>
             </div>
 
-            {/* 사이드바 (우측) */}
-            <div className="space-y-10">
-                {/* 액션 카드 (상단 배치) */}
-                <div className="sticky top-24 z-10 space-y-6">
-                    <Suspense fallback={<div className="h-48 w-full bg-amber-500/10 rounded-3xl animate-pulse" />}>
-                        <VoteCard recipeId={id} />
-                    </Suspense>
+            {/* Sidebar (Right, col-span-4) */}
+            <div className="lg:col-span-4 space-y-8">
+                 {/* Vote Card */}
+                 <Suspense fallback={<div className="h-48 w-full bg-amber-500/10 rounded-3xl animate-pulse" />}>
+                    <VoteCard recipeId={id} />
+                 </Suspense>
 
-                    <Suspense fallback={<div className="h-64 w-full bg-slate-900 rounded-3xl animate-pulse" />}>
-                        <RecipeActions
-                            recipeId={id}
-                            initialLikeCount={recipe.likes?.[0]?.count || 0}
-                            authorId={recipe.user_id}
-                        />
-                    </Suspense>
-                </div>
+                 {/* Recipe Actions */}
+                 <Suspense fallback={<div className="h-64 w-full bg-slate-900 rounded-3xl animate-pulse" />}>
+                    <RecipeActions
+                        recipeId={id}
+                        initialLikeCount={recipe.likes?.[0]?.count || 0}
+                        authorId={recipe.user_id}
+                    />
+                 </Suspense>
 
-                {/* 재료/도구 섹션 */}
-                <section className="bg-slate-900/50 rounded-3xl p-6 border border-white/5">
+                 {/* Ingredients / Tools */}
+                 <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/5">
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <Zap className="w-5 h-5 text-indigo-500" />
                         준비물 및 프롬프트
@@ -175,22 +198,8 @@ export default async function RecipePage({
                             </div>
                         ))}
                     </div>
-                </section>
-
-                {/* 작성자 프로필 (간단) */}
-                <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/5 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-bold text-white overflow-hidden shrink-0">
-                        {author.avatar_url ? (
-                            <Image src={author.avatar_url} alt={author.username || "User"} width={48} height={48} />
-                        ) : (author.username?.[0] || "?")}
-                    </div>
-                    <div>
-                        <p className="text-sm text-slate-400">Created by</p>
-                        <p className="text-white font-bold">{author.username}</p>
-                    </div>
-                </div>
+                 </div>
             </div>
-
         </div>
       </div>
     </div>
