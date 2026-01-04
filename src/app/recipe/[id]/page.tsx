@@ -6,9 +6,10 @@ import { ViewCounter } from "@/components/view-counter";
 import { RecipeActions } from "@/components/recipe-actions";
 import CommentsSection from "@/components/comments-section";
 import { VariablePromptRenderer } from "@/components/prompt-variable-renderer";
+import { ImageComparison } from "@/components/image-comparison";
 
 // [긴급 수정] 500 에러 방지를 위해 캐싱 끄기
-export const revalidate = 0; 
+export const revalidate = 0;
 
 export default async function RecipePage({
   params,
@@ -35,7 +36,7 @@ export default async function RecipePage({
   return (
     <div className="bg-[#020617] min-h-screen">
       <ViewCounter recipeId={id} />
-      
+
       {/* 1. 집중된 헤더 영역 */}
       <div className="max-w-screen-xl mx-auto px-4 pt-12 pb-8">
         <div className="max-w-3xl mx-auto text-center space-y-6">
@@ -43,12 +44,12 @@ export default async function RecipePage({
                 <Zap className="w-3 h-3" />
                 <span>{recipe.category || "AI WORKFLOW"}</span>
             </div>
-            
+
             {/* 제목 크기 (2xl/4xl 유지) */}
             <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-normal sm:leading-tight">
                 {recipe.title}
             </h1>
-            
+
             <div className="flex items-center justify-center gap-6 py-4 border-y border-white/5">
                 <div className="flex items-center gap-2 group">
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase overflow-hidden">
@@ -74,22 +75,30 @@ export default async function RecipePage({
       {/* 2. 대형 히어로 이미지 (최적화) */}
       <div className="max-w-screen-lg mx-auto px-4 mb-16">
         <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-[0_0_50px_-12px_rgba(79,70,229,0.3)] border border-white/10">
-            {recipe.image_url && (
-                <Image
-                    src={recipe.image_url}
-                    alt={recipe.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 1024px"
+            {recipe.before_image_url && recipe.after_image_url ? (
+                <ImageComparison
+                  beforeImage={recipe.before_image_url}
+                  afterImage={recipe.after_image_url}
+                  className="h-full w-full object-cover"
                 />
+            ) : (
+                recipe.image_url && (
+                    <Image
+                        src={recipe.image_url}
+                        alt={recipe.title}
+                        fill
+                        className="object-cover"
+                        priority
+                        sizes="(max-width: 1024px) 100vw, 1024px"
+                    />
+                )
             )}
         </div>
       </div>
 
       {/* 3. 본문 레이아웃 (단일 컬럼 집중형) */}
       <div className="max-w-3xl mx-auto px-4 pb-24">
-        
+
         {/* 설명 섹션 (줄바꿈 적용) */}
         <section className="mb-16">
             <p className="text-xl text-slate-300 leading-relaxed italic border-l-4 border-indigo-500 pl-6 py-2 bg-indigo-500/5 whitespace-pre-wrap">
@@ -148,14 +157,14 @@ export default async function RecipePage({
         <div className="mt-32 space-y-20">
             <div className="flex justify-center">
                 <Suspense fallback={<div className="h-16 w-64 bg-slate-900 rounded-full animate-pulse" />}>
-                    <RecipeActions 
-                        recipeId={id} 
+                    <RecipeActions
+                        recipeId={id}
                         initialLikeCount={recipe.likes?.[0]?.count || 0}
                         authorId={recipe.user_id}
                     />
                 </Suspense>
             </div>
-            
+
             <div className="pt-16 border-t border-white/5">
                 <Suspense fallback={<div className="h-40 w-full bg-slate-800 animate-pulse rounded-2xl" />}>
                     <CommentsSection recipeId={id} />
